@@ -1,0 +1,60 @@
+# SPDX-FileCopyrightText: Alliander N.V.
+#
+# SPDX-License-Identifier: Apache-2.0
+
+name: Vale
+run-name: 'Scan "${{ inputs.repository }}" with git ref "${{ inputs.ref }}"'
+
+on:
+  workflow_dispatch:
+    inputs:
+      repository:
+        description: 'GitHub repository path (myorg/myrepo)'
+        required: true
+        default: 'owntech-foundation/Core'
+        type: string
+      ref:
+        description: 'Optional git reference or branch to scan (main/master)'
+        default: ''
+
+jobs:
+  scan:
+    runs-on: ubuntu-24.04
+
+    # The steps use `if: ${{ !cancelled }}` so that the entire workflow is run
+    # whilst individual steps can be marked as failed.
+    steps:
+    - name: Checkout project
+      uses: actions/checkout@v4
+      with:
+        repository: ${{ inputs.repository }}
+        ref: ${{ inputs.ref }}
+        token: ${{secrets.GH_REPOSITORY_READ_PERMISSIONS }}
+
+    - name: Ensure output directory
+      if: ${{ !cancelled() }}
+      run: |
+        mkdir ../results
+
+    - name: Get commit hash
+      if: ${{ !cancelled() }}
+      run: |
+        echo "COMMIT_HASH=$(git rev-parse HEAD)" >> $GITHUB_ENV
+
+    # Checkout config files and run steps needing the config
+    - name: Checkout config files
+      if: ${{ !cancelled() }}
+      uses: actions/checkout@v4
+      with:
+        path: .ospo-code-scanner
+        sparse-checkout: |
+          config/vale.ini
+        sparse-checkout-cone-mode: false
+
+    - name: 🔍 Writing style (Vale)
+      if: ${{ !cancelled() }}
+      run: |
+        pipx install vale
+        pipx install --include-deps rst2html
+        vale --config .ospo-code-scanner/config/vale.ini sync
+        vale --config .ospo-code-scanner/config/vale.ini --no-wrap .
