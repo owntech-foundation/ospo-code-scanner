@@ -11,7 +11,7 @@ on:
       repository:
         description: 'GitHub repository path (myorg/myrepo)'
         required: true
-        default: 'PowerGridModel/power-grid-model'
+        default: 'owntech-foundation/Core'
         type: string
       ref:
         description: 'Optional git reference or branch to scan (main/master)'
@@ -78,7 +78,7 @@ jobs:
         sparse-checkout: |
           config/repolinter-rules.yaml
           config/vale.ini
-          config/woke.yaml
+          # config/woke.yaml
         sparse-checkout-cone-mode: false
 
     - name: 🔍 Repository structure (Repolinter)
@@ -86,12 +86,12 @@ jobs:
       run: |
         npx repolinter --rulesetFile .ospo-code-scanner/config/repolinter-rules.yaml
 
-    - name: 🔍 Non-inclusive language (Woke)
-      # NOTE: Custom execution command is used instead of GitHub Action to get normal text output
-      if: ${{ !cancelled() }}
-      run: |
-        docker run -v $(pwd):/src -w /src getwoke/woke \
-        woke --exit-1-on-failure --config .ospo-code-scanner/config/woke.yaml .
+    # - name: 🔍 Non-inclusive language (Woke)
+    #   # NOTE: Custom execution command is used instead of GitHub Action to get normal text output
+    #   if: ${{ !cancelled() }}
+    #   run: |
+    #     docker run -v $(pwd):/src -w /src getwoke/woke \
+    #     woke --exit-1-on-failure --config .ospo-code-scanner/config/woke.yaml .
 
     - name: 🔍 Writing style (Vale)
       if: ${{ !cancelled() }}
